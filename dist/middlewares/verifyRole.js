@@ -11,7 +11,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = VerifyRole;
 function VerifyRole(role) {
-    return (req, res, next) => __awaiter(this, void 0, void 0, function* () {
+    return (req, _res, next) => __awaiter(this, void 0, void 0, function* () {
         try {
             if (!req.user)
                 throw new Error("401");

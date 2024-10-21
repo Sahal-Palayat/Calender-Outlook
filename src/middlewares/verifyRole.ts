@@ -1,9 +1,8 @@
-import * as JWT from "jsonwebtoken";
 import IRequest from "../entities/requestInterface";
-import { NextFunction } from "express";
+import { NextFunction, Response } from "express";
 
-export default function VerifyRole(role: string) {
-    return async (req: IRequest, res: Response, next: NextFunction) => {
+export default function VerifyRole(role: "employee" | "manager") {
+    return async (req: IRequest, _res: Response, next: NextFunction) => {
         try {
             if (!req.user) throw new Error("401");
             if (req.user.role !== role) throw new Error("403");

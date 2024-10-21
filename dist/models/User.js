@@ -43,6 +43,9 @@ exports.UserSchema = new mongoose_1.Schema({
     otp: {
         type: String,
     },
+    timeout: {
+        type: Date,
+    },
 });
 exports.UserSchema.pre('save', function (next) {
     return __awaiter(this, void 0, void 0, function* () {

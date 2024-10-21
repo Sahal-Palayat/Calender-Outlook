@@ -32,6 +32,9 @@ export const UserSchema = new Schema<IEmployee>({
     otp: {
         type: String,
     },
+    timeout: {
+        type: Date,
+    },
 })
 
 UserSchema.pre('save', async function (next) {

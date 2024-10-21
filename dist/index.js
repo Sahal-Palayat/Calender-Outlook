@@ -1,15 +1,32 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 const db_1 = require("./config/db");
-const express = require('express');
-const cors = require('cors');
-const dotenv = require('dotenv');
-dotenv.config();
-const app = express();
+const managerRouter_1 = __importDefault(require("./routes/managerRouter"));
+const userRouter_1 = __importDefault(require("./routes/userRouter"));
+const dotenv_1 = require("dotenv");
+(0, dotenv_1.config)();
+const express_1 = __importDefault(require("express"));
+const cors_1 = __importDefault(require("cors"));
+const morgan_1 = __importDefault(require("morgan"));
+const app = (0, express_1.default)();
 const port = 7000;
+app.use((0, morgan_1.default)("dev"));
 (0, db_1.mongooseConfig)();
-app.use(cors({ origin: process.env.BASE_URL || '' }));
-app.use(express.json());
+app.use((0, cors_1.default)({
+    origin: process.env.BASE_URL || '',
+    credentials: true,
+    optionsSuccessStatus: 201,
+    allowedHeaders: ['Origin', 'X-Requested-With', 'Content-Type', 'Authorization'],
+    preflightContinue: true,
+    methods: ['GET', 'PUT', 'POST', 'DELETE', 'PATCH']
+}));
+app.use(express_1.default.json());
+app.use("/employee", userRouter_1.default);
+app.use("/manager", managerRouter_1.default);
+app.use("/auth", managerRouter_1.default);
 app.use((err, req, res, next) => {
     const status = err.message || "500";
     const errors = {
@@ -19,7 +36,7 @@ app.use((err, req, res, next) => {
         "500": "Internal Server Error"
     };
     const errorMessage = errors[status] || "Unknown Error";
-    res.status(status).json({
+    res.status(Number(status)).json({
         message: errorMessage
     });
 });

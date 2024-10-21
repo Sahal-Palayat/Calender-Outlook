@@ -1,6 +1,6 @@
 import * as JWT from "jsonwebtoken";
 import IRequest from "../entities/requestInterface";
-import { NextFunction } from "express";
+import { NextFunction, Response } from "express";
 import AppConfig from "../config/jwt";
 import User from "../models/User";
 interface IJWT extends JWT.JwtPayload {

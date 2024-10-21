@@ -9,4 +9,6 @@ export default interface IEmployee extends Document {
     position: string;
     role: "employee" | "manager";
     otp?:string;
+    timeout?: Date;
+    _id:ObjectId;
 }
