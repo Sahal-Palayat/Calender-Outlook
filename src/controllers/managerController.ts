@@ -81,7 +81,7 @@ export async function login(req: IRequest, res: Response, next: NextFunction) {
         console.log(req.body)
         const user = await User.findOne({ email: email });
         console.log(user)
-        if (!user || user.verified) {
+        if (!user || !user.verified) {
             throw new Error('400');
         }
 

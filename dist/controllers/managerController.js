@@ -100,7 +100,7 @@ function login(req, res, next) {
             console.log(req.body);
             const user = yield User_1.default.findOne({ email: email });
             console.log(user);
-            if (!user || user.verified) {
+            if (!user || !user.verified) {
                 throw new Error('400');
             }
             const isPasswordValid = yield bcrypt_1.default.compare(password, user.password);
