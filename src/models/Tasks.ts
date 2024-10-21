@@ -1,4 +1,4 @@
-import ITasks from "@/entities/tasks";
+import ITasks from "../entities/tasks";
 import { model, Schema, Types } from "mongoose";
 
 const TaskSchema = new Schema<ITasks>({

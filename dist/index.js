@@ -6,6 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const db_1 = require("./config/db");
 const managerRouter_1 = __importDefault(require("./routes/managerRouter"));
 const userRouter_1 = __importDefault(require("./routes/userRouter"));
+const authRouter_1 = __importDefault(require("./routes/authRouter"));
 const dotenv_1 = require("dotenv");
 (0, dotenv_1.config)();
 const express_1 = __importDefault(require("express"));
@@ -19,15 +20,15 @@ app.use((0, cors_1.default)({
     origin: process.env.BASE_URL || '',
     credentials: true,
     optionsSuccessStatus: 201,
-    allowedHeaders: ['Origin', 'X-Requested-With', 'Content-Type', 'Authorization'],
-    preflightContinue: true,
+    preflightContinue: false,
     methods: ['GET', 'PUT', 'POST', 'DELETE', 'PATCH']
 }));
 app.use(express_1.default.json());
+app.use(express_1.default.urlencoded({ extended: true }));
 app.use("/employee", userRouter_1.default);
 app.use("/manager", managerRouter_1.default);
-app.use("/auth", managerRouter_1.default);
-app.use((err, req, res, next) => {
+app.use("/auth", authRouter_1.default);
+app.use((err, _req, res, _next) => {
     const status = err.message || "500";
     const errors = {
         "401": "Unauthorized Access",

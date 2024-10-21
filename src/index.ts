@@ -1,6 +1,7 @@
 import { mongooseConfig } from "./config/db";
 import managerRouter from "./routes/managerRouter";
 import userRouter from "./routes/userRouter";
+import authRouter from "./routes/authRouter";
 import { config } from "dotenv"
 config()
 import express from "express";
@@ -11,21 +12,23 @@ import morgan from "morgan"
 const app = express();
 const port = 7000;
 app.use(morgan("dev"))
+
+
 mongooseConfig()
 app.use(cors({
     origin: process.env.BASE_URL || '',
     credentials: true,
     optionsSuccessStatus: 201,
-    allowedHeaders: ['Origin', 'X-Requested-With', 'Content-Type', 'Authorization'],
-    preflightContinue: true,
+    preflightContinue: false,
     methods: ['GET', 'PUT', 'POST', 'DELETE', 'PATCH']
 }))
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 app.use("/employee", userRouter)
 app.use("/manager", managerRouter)
-app.use("/auth", managerRouter)
+app.use("/auth", authRouter)
 
-app.use((err: any, req: any, res: any, next: any) => {
+app.use((err: any, _req: any, res: any, _next: any) => {
     const status: "401" | "403" | "404" | "500" = err.message || "500";
     const errors = {
         "401": "Unauthorized Access",

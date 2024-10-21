@@ -11,4 +11,5 @@ export default interface IEmployee extends Document {
     otp?:string;
     timeout?: Date;
     _id:ObjectId;
+    verified:boolean;
 }

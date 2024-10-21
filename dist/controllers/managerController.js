@@ -18,6 +18,7 @@ exports.verify = verify;
 exports.verifyOtp = verifyOtp;
 exports.addEmployee = addEmployee;
 exports.deleteEmployee = deleteEmployee;
+exports.getEmployees = getEmployees;
 exports.addTask = addTask;
 exports.getTasks = getTasks;
 exports.getDetails = getDetails;
@@ -54,30 +55,37 @@ function signup(req, res, next) {
             const { email, name, password } = req.body;
             const file = req.file;
             let profile = "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTtuphMb4mq-EcVWhMVT8FCkv5dqZGgvn_QiA&s";
+            const otp = Math.floor(100000 + Math.random() * 900000).toString();
             const existingUser = yield User_1.default.findOne({ email });
+            const timeout = new Date(Date.now() + 120000);
             if (existingUser) {
-                throw new Error('400');
+                if (existingUser.verified)
+                    throw new Error('400');
+                existingUser.otp = otp;
+                existingUser.timeout = timeout;
+                yield existingUser.save();
+                yield sendOtpEmail(email, otp);
+                return res.status(201).json({ message: 'User not yet verified. Please verify the OTP sent to your email.', id: existingUser._id });
             }
             if (file) {
                 profile = yield (0, upload_1.UploadFile)(file);
             }
-            const otp = Math.floor(100000 + Math.random() * 900000).toString();
-            const hashedPassword = yield bcrypt_1.default.hash(password, 10);
-            const timeout = new Date(Date.now() + 120000);
+            yield sendOtpEmail(email, otp);
             const newUser = new User_1.default({
                 email,
                 name,
-                password: hashedPassword,
+                password: password,
                 otp,
                 timeout,
                 role: "manager",
                 profile,
             });
+            console.log(newUser);
             yield newUser.save();
-            yield sendOtpEmail(email, otp);
-            res.status(201).json({ message: 'User created successfully. Please verify the OTP sent to your email.' });
+            res.status(201).json({ message: 'User created successfully. Please verify the OTP sent to your email.', id: newUser._id });
         }
         catch (e) {
+            console.log(e);
             if (e.message === '400') {
                 return res.status(400).json({ message: 'User already exists' });
             }
@@ -89,18 +97,18 @@ function login(req, res, next) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
             const { email, password } = req.body;
-            // Find user by email
-            const user = yield User_1.default.findOne({ email });
-            if (!user) {
-                throw new Error('400'); // 400: Invalid email or password
+            console.log(req.body);
+            const user = yield User_1.default.findOne({ email: email });
+            console.log(user);
+            if (!user || user.verified) {
+                throw new Error('400');
             }
-            // Validate password
             const isPasswordValid = yield bcrypt_1.default.compare(password, user.password);
+            console.log(isPasswordValid);
             if (!isPasswordValid) {
-                throw new Error('400'); // 400: Invalid email or password
+                throw new Error('400');
             }
-            // Create JWT token
-            const token = jsonwebtoken_1.default.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '1h' });
+            const token = jsonwebtoken_1.default.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET || "sahalikka-secret", { expiresIn: '1h' });
             res.status(200).json({ message: 'Login successful', token });
         }
         catch (e) {
@@ -129,10 +137,10 @@ function verifyOtp(req, res, next) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
             const { otp } = req.body;
-            const { userId } = req.params;
-            if (!otp || !userId || otp.length < 6 || !(0, common_1.checkObjectId)(userId))
+            const { id } = req.params;
+            if (!otp || !id || otp.length < 6 || !(0, common_1.checkObjectId)(id))
                 throw new Error(`401`);
-            const user = yield User_1.default.findOneAndUpdate({ _id: (0, common_1.convertObjectId)(userId), otp: otp, timeout: { $gt: new Date() } }, { otp: null, timeouts: null });
+            const user = yield User_1.default.findOneAndUpdate({ _id: (0, common_1.convertObjectId)(id), otp: otp, timeout: { $gt: new Date() } }, { otp: null, timeouts: null, verified: true });
             if (!user)
                 throw new Error(`404`);
             return res.status(200).json({ user });
@@ -149,15 +157,17 @@ function addEmployee(req, res, next) {
             const file = req.file;
             const user = req.user;
             let profile = "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTtuphMb4mq-EcVWhMVT8FCkv5dqZGgvn_QiA&s";
-            const existingEmployee = yield User_1.default.findOne({ email });
-            if (!existingEmployee)
+            const existingEmployee = yield User_1.default.findOne({ email: email });
+            if (existingEmployee)
                 throw new Error(`400`);
+            console.log(file);
             if (file) {
                 profile = yield (0, upload_1.UploadFile)(file);
             }
             const employee = new User_1.default({
-                name, email, password, position, role: "employee", profile, managerId: user._id,
+                name, email, password, position, role: "employee", profile, managerId: user._id, verified: true
             });
+            yield employee.save();
             return res.status(200).json({ employee });
         }
         catch (e) {
@@ -188,15 +198,31 @@ function deleteEmployee(req, res, next) {
         }
     });
 }
+function getEmployees(req, res, next) {
+    return __awaiter(this, void 0, void 0, function* () {
+        try {
+            const user = req.user;
+            const employees = yield User_1.default.find({ managerId: user._id });
+            return res.status(200).json({ employees, user });
+        }
+        catch (e) {
+            next(new Error(e.message));
+        }
+    });
+}
 function addTask(req, res, next) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
             const user = req.user;
             const { title, description, employees, end, priority, start, date, myself } = req.body;
-            if (employees.length === 0)
+            console.log(req.body);
+            const employee = employees.map((id) => {
+                return { id: (0, common_1.convertObjectId)(id) };
+            });
+            if (employees.length === 0 && !myself)
                 throw new Error("400");
             const task = new Tasks_1.default({
-                title, description, start: new Date(start), end: new Date(end), date: new Date(date), priority, employees: employees.map(id => (0, common_1.convertObjectId)(id)), managerId: user._id, myself
+                title, description, start: new Date(start), end: new Date(end), employees: employee, date: new Date(date), priority, managerId: user._id, myself
             });
             yield task.save();
             return res.status(200).json({ task });
@@ -214,7 +240,8 @@ function getTasks(req, res, next) {
         try {
             const user = req.user;
             const tasks = yield Tasks_1.default.find({ managerId: user._id });
-            return res.status(200).json({ tasks, user });
+            const employees = yield User_1.default.find({ managerId: user._id });
+            return res.status(200).json({ tasks, user, employees });
         }
         catch (e) {
             next(new Error(e.message));
@@ -254,16 +281,18 @@ function updateTask(req, res, next) {
             const user = req.user;
             const { id } = req.params;
             const { title, description, employees, end, priority, start, date, myself } = req.body;
+            console.log(req.body);
             if (!(0, common_1.checkObjectId)(id))
                 throw new Error("404");
-            if (employees.length === 0)
+            if (employees.length === 0 && !myself)
                 throw new Error("400");
-            const task = Tasks_1.default.findByIdAndUpdate(id, { title, description, start: new Date(start), end: new Date(end), date: new Date(date), priority, employees: employees.map(id => (0, common_1.convertObjectId)(id)), managerId: user._id, myself });
+            const task = yield Tasks_1.default.findByIdAndUpdate(id, { title, description, start: new Date(start), end: new Date(end), date: new Date(date), priority, employees, myself }, { new: true }).lean();
             if (!task)
                 throw new Error("404");
             return res.status(200).json({ task, user });
         }
         catch (e) {
+            console.log(e);
             if (e.message === '404') {
                 return res.status(400).json({ message: 'No task found' });
             }

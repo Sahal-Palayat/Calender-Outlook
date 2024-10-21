@@ -17,6 +17,7 @@ function VerifyRole(role) {
                 throw new Error("401");
             if (req.user.role !== role)
                 throw new Error("403");
+            console.log(req.user, role);
             next();
         }
         catch (error) {

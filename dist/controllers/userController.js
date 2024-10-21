@@ -46,10 +46,12 @@ function getTasks(req, res, next) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
             const user = req.user;
-            const tasks = yield Tasks_1.default.find({ employees: { $in: [user.id] } });
+            const tasks = yield Tasks_1.default.find({ "employees.id": user._id });
+            console.log(tasks);
             return res.status(200).json({ tasks, user });
         }
         catch (e) {
+            console.log(e);
             next(new Error(e.message));
         }
     });

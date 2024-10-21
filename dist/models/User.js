@@ -46,12 +46,17 @@ exports.UserSchema = new mongoose_1.Schema({
     timeout: {
         type: Date,
     },
+    verified: {
+        type: Boolean,
+        default: false
+    },
 });
 exports.UserSchema.pre('save', function (next) {
     return __awaiter(this, void 0, void 0, function* () {
         if (!this.isModified('password'))
             return next();
         try {
+            console.log(this.password);
             const hashedPassword = yield (0, bcryptjs_1.hash)(this.password, 10);
             this.password = hashedPassword;
             next();

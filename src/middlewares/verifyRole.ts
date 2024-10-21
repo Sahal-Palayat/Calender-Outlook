@@ -6,6 +6,7 @@ export default function VerifyRole(role: "employee" | "manager") {
         try {
             if (!req.user) throw new Error("401");
             if (req.user.role !== role) throw new Error("403");
+            console.log(req.user,role)
             next();
         } catch (error: any) {
             next(new Error(error.message))

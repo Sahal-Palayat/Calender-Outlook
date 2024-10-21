@@ -1,9 +1,6 @@
 {
   "compilerOptions": {
     "baseUrl": "./", 
-    "paths": {
-      "@/*": ["src/*"]  // Alias only for the source files
-    },
     "rootDir": "./src", 
     "outDir": "./dist", 
     "module": "commonjs",

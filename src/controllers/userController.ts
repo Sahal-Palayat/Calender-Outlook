@@ -33,9 +33,11 @@ export async function login(req: IRequest, res: Response, next: NextFunction) {
 export async function getTasks(req: IRequest, res: Response, next: NextFunction): Promise<Response | void> {
     try {
         const user = req.user as IEmployee;
-        const tasks = await Tasks.find({ employees: { $in: [user.id] } })
+        const tasks = await Tasks.find({ "employees.id": user._id })
+        console.log(tasks)
         return res.status(200).json({ tasks, user })
     } catch (e: any) {
+        console.log(e)
         next(new Error(e.message))
 
     }

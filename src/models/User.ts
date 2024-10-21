@@ -26,7 +26,7 @@ export const UserSchema = new Schema<IEmployee>({
     },
     role: {
         type: String,
-        enum: ["employee", "manager"],  
+        enum: ["employee", "manager"],
         default: "employee"
     },
     otp: {
@@ -35,11 +35,16 @@ export const UserSchema = new Schema<IEmployee>({
     timeout: {
         type: Date,
     },
+    verified: {
+        type: Boolean,
+        default: false
+    },
 })
 
 UserSchema.pre('save', async function (next) {
     if (!this.isModified('password')) return next();
     try {
+        console.log(this.password)
         const hashedPassword = await hash(this.password, 10);
         this.password = hashedPassword;
         next();

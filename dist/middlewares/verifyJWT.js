@@ -44,19 +44,24 @@ function VerifyJWT(req, res, next) {
         var _a;
         try {
             const token = (_a = req.headers.authorization) === null || _a === void 0 ? void 0 : _a.split(" ")[1];
+            console.log(token, req.headers);
             if (!token)
                 throw new Error("401");
             const decoded = JWT.verify(token, jwt_1.default.jwtSecret);
-            if (!decoded.userId)
+            if (!decoded.id)
                 throw new Error("401");
-            const user = yield User_1.default.findById(decoded.userId);
+            const user = yield User_1.default.findById(decoded.id);
             if (!user)
+                throw new Error("404");
+            console.log(user);
+            if (!user.verified)
                 throw new Error("404");
             req.user = user;
             next();
         }
         catch (error) {
-            next(new Error(error.message));
+            console.log(error.message);
+            next(new Error("401"));
         }
     });
 }

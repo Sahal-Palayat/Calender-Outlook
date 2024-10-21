@@ -1,7 +1,7 @@
 import { RequestHandler, Router } from "express"
 import VerifyJWT from "../middlewares/verifyJWT"
 import VerifyRole from "../middlewares/verifyRole"
-import { getDetails, getTasks, login,updateDetails, verify } from "../controllers/userController"
+import { getDetails, getTasks,updateDetails, verify } from "../controllers/userController"
 const router: Router = Router({ caseSensitive: true }).use(VerifyJWT).use(VerifyRole("employee"))
 
 router.route("/tasks").get(getTasks as RequestHandler)
